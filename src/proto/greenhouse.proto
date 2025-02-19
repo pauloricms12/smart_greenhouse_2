@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+message ActuatorRequest {
+  string name = 1;
+  int64 deviceId = 2;
+  float value = 3;
+  bool active = 4;
+}
+
+message ActuatorResponse {
+  bool success = 2;
+}
+
+message DeviceStatus {
+  int64 deviceId = 1;
+  string name = 2;
+  bool active = 3;
+  float value = 4;
+  string unit = 5;
+}
