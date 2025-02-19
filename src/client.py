@@ -1,68 +1,58 @@
-import socket
-import logging
-import greenhouse_pb2 as greenhouse_pb2
+import streamlit as st
+import requests
+import matplotlib.pyplot as plt
+import numpy as np
+import time
 
-GATEWAY_IP = "localhost"
-GATEWAY_PORT = 40002
+GATEWAY_URL = "http://localhost:8001"
 
-def send_command(command, name="", value=0):
+#buscar os dados dos sensores com cache
+@st.cache_data(ttl=2) 
+def get_sensor_data():
     try:
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.connect((GATEWAY_IP, GATEWAY_PORT)) 
-        
-        cmd = greenhouse_pb2.Command()
-        cmd.command = command
-        cmd.name = name
-        cmd.value = value
+        response = requests.get(f"{GATEWAY_URL}/sensors")
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error to connect to gateway: {e}")
+        return {}
 
-        client_socket.send(cmd.SerializeToString())
+def plot_sensor_data(sensor_data, sensor_name):
+    if not sensor_data:
+        st.warning(f"No data fot {sensor_name}.")
+        return
+    
+    values = [float(sensor["value"]) for sensor in sensor_data]
+    times = np.arange(len(sensor_data))
+    unit = sensor_data[0]["unit"] if "unit" in sensor_data[0] else ""
 
-        data = client_socket.recv(1024)
-        client_socket.close()
+    plt.figure(figsize=(10, 5))
+    plt.plot(times, values, marker ='o')
+    plt.ylabel(f"{sensor_name} Value ({unit})")
+    plt.grid(True, axis='y')
+    plt.xlim(0, 20)
+    plt.xticks([])
+    st.pyplot(plt)
 
-        if data:
-            response = greenhouse_pb2.Response()
-            try:
-                response.ParseFromString(data)
-                logging.info(f"Response from server (via Gateway): {response}")
-                return response
-            except Exception as e:
-                logging.error(f"Failed to parse Protobuf message from Gatewat: {e}")
-                return "Failed to parse response"
-        else:
-            logging.warning("No response received from the Gateway.")
-            return "No response received from the Gateway."
+st.title("🌱 Smart Greenhouse Dashboard")
 
-    except ConnectionRefusedError:
-        logging.error("Error: Unable to connect to the Gateway. Make sure it is running.")
-    except Exception as e:
-        logging.error(f"Unexpected error: {e}")
+temperature_placeholder = st.empty()
+light_placeholder = st.empty()
+humidity_placeholder = st.empty()
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+while True:
+    sensor_data = get_sensor_data()
+    
+    with temperature_placeholder.container():
+        st.subheader("🌡️ Temperature Sensor")
+        plot_sensor_data(sensor_data.get('temperature_sensor', []), 'Temperature')
 
-    while True:
-        print("\nCommand Menu:")
-        print("1. Check devices statuses")
-        print("2. Control an actuator")
-        print("3. Exit")
+    with light_placeholder.container():
+        st.subheader("💡 Light Sensor")
+        plot_sensor_data(sensor_data.get('light_sensor', []), 'Light')
 
-        option = input("Choose an option: ")
+    with humidity_placeholder.container():
+        st.subheader("💧 Humidity Sensor")
+        plot_sensor_data(sensor_data.get('humidity_sensor', []), 'Humidity')
 
-        if option == "1":
-            send_command("GET")
+    time.sleep(2)
 
-        elif option == "2":
-            actuator = input("Enter the actuator (Irrigator, Heater, Cooler, Lamps, Curtains): ")
-            if actuator not in ['Irrigator', 'Heater', 'Cooler', 'Lamps', 'Curtains']:
-                print("Invalid option. Please try again.")
-                continue
-            value = float(input("Enter the desired value: "))
-            send_command("SET", actuator, value=value)
-
-        elif option == "3":
-            print("Exiting the program.")
-            break
-
-        else:
-            print("Invalid option. Please try again.")

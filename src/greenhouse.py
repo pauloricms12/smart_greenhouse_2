@@ -47,7 +47,7 @@ class Sensor(Device):
 
             except Exception as e:
                 print(f"Error to connect to RabbitMQ: {e}")
-                time.sleep(5) 
+                time.sleep(10) 
 
 
 class Actuator(Device):
