@@ -1,8 +1,10 @@
+streamlit
+requests
+matplotlib
+numpy
 fastapi
 uvicorn
 pika
+grpcio
+grpcio-tools
 protobuf
-requests
-streamlit
-matplotlib
-numpy
