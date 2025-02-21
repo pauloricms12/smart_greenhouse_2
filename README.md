@@ -65,12 +65,12 @@ python gateway.py
   - Value: 59.45 lux
 ```
 
-## Running the Streamlit Dashboard
+## Running the Streamlit Dashboard Client
 
 The Streamlit dashboard provides a web interface for monitoring sensor data and sending actuator commands.
 
 ```sh
-streamlit run dashboard.py
+streamlit run client.py
 ```
 
 ### Features:
@@ -90,13 +90,8 @@ streamlit run dashboard.py
 - Parses messages using `protobuf`.
 - Displays received sensor data in the terminal.
 
-### `dashboard.py`
+### `client.py`
 - Fetches sensor data from the gateway.
 - Visualizes sensor readings using Matplotlib.
 - Allows users to control actuators via an intuitive web interface.
-
-## Future Improvements
-- Implement actuator functionalities with real-world hardware.
-- Add database storage for historical sensor data.
-- Enhance the web dashboard with advanced analytics and alerting features.
 
